@@ -15,11 +15,10 @@ priorities, fairshare, accounting, GRES — is detail hanging off those two jobs
 
 Slurm is a handful of long-running daemons that talk to each other:
 
-
 ```mermaid
 flowchart TB
 
-    %% ---------------- Clients ----------------
+%% ---------------- Clients ----------------
     subgraph Clients
         SB["sbatch"]
         SQ["squeue"]
@@ -29,16 +28,15 @@ flowchart TB
         SR["slurmrestd (optional)"]
     end
 
-    %% ---------------- Controller ----------------
+%% ---------------- Controller ----------------
     subgraph Control["Control Node"]
         CTL["slurmctld<br/>Controller & Scheduler"]
         DBD["slurmdbd<br/>Accounting Service"]
         DB[("MySQL / MariaDB")]
     end
 
-    %% ---------------- Compute ----------------
+%% ---------------- Compute ----------------
     subgraph Compute["Compute Nodes"]
-
         subgraph N1["Node 1"]
             D1["slurmd"]
             ST1["slurmstepd"]
@@ -59,30 +57,26 @@ flowchart TB
 
     end
 
-    %% Client communication
+%% Client communication
     SB --> CTL
     SQ --> CTL
     SC --> CTL
     SI --> CTL
     SA --> DBD
     SR --> CTL
-
-    %% Scheduler
+%% Scheduler
     CTL --> D1
     CTL --> D2
     CTL --> DN
-
-    %% Job execution
+%% Job execution
     D1 --> ST1
     D2 --> ST2
     DN --> STN
-
-    %% GPU monitoring
+%% GPU monitoring
     ST1 --> GPU1
     ST2 --> GPU2
     STN --> GPUN
-
-    %% Accounting
+%% Accounting
     CTL --> DBD
     DBD --> DB
 ```
@@ -108,27 +102,39 @@ flowchart TB
             └──────────────┘   (stores job history, limits, QOS, fairshare)
 ```
 
+### **`slurmctld`**
+> the brain. 
+- One per cluster (two for HA).
+- It owns the queue and every scheduling decision. 
+
+When people say "Slurm is hard to replace," they mean this: 20 years of scheduling logic live here.
 
 
-
-- **`slurmctld`** — the brain. One per cluster (two for HA). It owns the queue and
-  every scheduling decision. When people say "Slurm is hard to replace," they mean
-  this: 20 years of scheduling logic live here.
-- **`slurmd`** — runs on *every* compute node. It reports the node's health to the
+### **`slurmd`** 
+> Worker 
+-  Runs on *every* compute node.
+- It reports the node's health to the
   controller and, when told, launches the job — spawning a **`slurmstepd`** that
   actually manages the job's processes and tears them down after.
-- **`slurmdbd`** — optional. The accounting daemon, backed by a SQL database. It
-  stores job history (`sacct`), and the *associations / QOS / fairshare* that drive
-  limits and priority. **Caravan's dev cluster skips it** (`accounting_storage/none`)
+
+### **`slurmdbd`** — optional. 
+> The accounting daemon, backed by a SQL database.
+
+ It  stores job history (`sacct`), and the *associations / QOS / fairshare* that drive
+  limits and priority. 
+ 
+ **Caravan's dev cluster skips it** (`accounting_storage/none`)
   because squint only reads live state, never history — which removes a whole
   database and its startup races.
 
 ## munge: why every node trusts every node
 
-Daemons and clients authenticate every message with **munge**. There's a single
-shared key (`/etc/munge/munge.key`) on every node; `munged` uses it to mint and
-verify time-limited credentials. No munge, no cluster — `slurmctld` and `slurmd`
-literally can't talk. (This is exactly the permission error that bites Slurm-in-
+Daemons and clients authenticate every message with **munge**.
+
+There's a single shared key (`/etc/munge/munge.key`) on every node; `munged` uses it to mint and
+verify time-limited credentials. 
+
+No munge, no cluster — `slurmctld` and `slurmd` literally can't talk. (This is exactly the permission error that bites Slurm-in-
 container setups: if `munged` can't open its socket, the whole stack fails to
 start.)
 
@@ -192,17 +198,17 @@ A node advertises **CPUs** (sockets × cores × threads), **RealMemory**, and
 
 ## The commands, and which daemon answers
 
-| Command | Does | Talks to |
-|---|---|---|
-| `sbatch` | submit a batch script | slurmctld |
-| `srun` | launch a job step (inside or as an allocation) | slurmctld → slurmd |
-| `salloc` | grab an interactive allocation | slurmctld |
-| `squeue` | view the live queue | slurmctld |
-| `sinfo` | view node / partition state | slurmctld |
-| `scontrol` | inspect/modify jobs, nodes, config | slurmctld |
-| `scancel` | cancel a job | slurmctld |
-| `sacct` | job *history* | slurmdbd |
-| `sacctmgr` | manage accounts / QOS / limits | slurmdbd |
+| Command    | Does                                           | Talks to           |
+|------------|------------------------------------------------|--------------------|
+| `sbatch`   | submit a batch script                          | slurmctld          |
+| `srun`     | launch a job step (inside or as an allocation) | slurmctld → slurmd |
+| `salloc`   | grab an interactive allocation                 | slurmctld          |
+| `squeue`   | view the live queue                            | slurmctld          |
+| `sinfo`    | view node / partition state                    | slurmctld          |
+| `scontrol` | inspect/modify jobs, nodes, config             | slurmctld          |
+| `scancel`  | cancel a job                                   | slurmctld          |
+| `sacct`    | job *history*                                  | slurmdbd           |
+| `sacctmgr` | manage accounts / QOS / limits                 | slurmdbd           |
 
 The split that matters: **live state** (`squeue`, `sinfo`, `scontrol`) comes from
 `slurmctld` and needs no database; **history** (`sacct`) needs `slurmdbd`. That's
@@ -228,14 +234,14 @@ humane control plane and a real-time view on top.
 
 The dev cluster Caravan embeds is a deliberately minimal version of all the above:
 
-| Concept | In Caravan's cluster |
-|---|---|
-| controller | `slurmctld` container |
-| compute nodes | `c1`, `c2` running `slurmd` |
-| auth | shared munge key baked into the image |
-| GPUs | count-only `gpu:4` per node (`gres.conf`, no `File=`) |
-| accounting | **none** — no `slurmdbd`, no database |
-| isolation | `proctrack/linuxproc` + `task/none` (container-friendly) |
+| Concept       | In Caravan's cluster                                     |
+|---------------|----------------------------------------------------------|
+| controller    | `slurmctld` container                                    |
+| compute nodes | `c1`, `c2` running `slurmd`                              |
+| auth          | shared munge key baked into the image                    |
+| GPUs          | count-only `gpu:4` per node (`gres.conf`, no `File=`)    |
+| accounting    | **none** — no `slurmdbd`, no database                    |
+| isolation     | `proctrack/linuxproc` + `task/none` (container-friendly) |
 
 It's the smallest thing that is still *real* Slurm — enough to schedule GPU jobs,
 exercise pending reasons, and give squint something true to watch.
