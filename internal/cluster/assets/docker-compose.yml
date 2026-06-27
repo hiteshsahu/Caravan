@@ -10,13 +10,24 @@ services:
       - ./gres.conf:/etc/slurm/gres.conf:ro
       - slurm_state:/var/spool/slurmctld
     networks: [slurm]
+    restart: unless-stopped
+    depends_on:
+      c1:
+        condition: service_healthy
+      c2:
+        condition: service_healthy
 
   c1:
     image: caravan-slurm:latest
     command: ["slurmd"]
     hostname: c1
     container_name: c1
-    depends_on: [slurmctld]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f slurmd || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - ./slurm.conf:/etc/slurm/slurm.conf:ro
       - ./gres.conf:/etc/slurm/gres.conf:ro
@@ -27,7 +38,12 @@ services:
     command: ["slurmd"]
     hostname: c2
     container_name: c2
-    depends_on: [slurmctld]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f slurmd || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
     volumes:
       - ./slurm.conf:/etc/slurm/slurm.conf:ro
       - ./gres.conf:/etc/slurm/gres.conf:ro
