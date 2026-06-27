@@ -2,4 +2,4 @@
 # so it must always be checked out with LF — CRLF breaks shell shebangs
 # (e.g. "/usr/bin/env: 'bash\r': No such file or directory") on Windows
 # clones where core.autocrlf=true.
-internal/cluster/assets/** text eol=lf
+slurm-cluster/** text eol=lf
