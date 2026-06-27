@@ -4,9 +4,10 @@
 
 ![Caravan COver](./img/cover.jpg)
 
-![Build](https://github.com/hiteshsahu/caravan/actions/workflows/ci.yaml/badge.svg)
+[![🛠️ Build & Test](https://github.com/hiteshsahu/Caravan/actions/workflows/build-test.yaml/badge.svg)](https://github.com/hiteshsahu/Caravan/actions/workflows/build-test.yaml)
+[![🚀 Release](https://github.com/hiteshsahu/Caravan/actions/workflows/release.yaml/badge.svg)](https://github.com/hiteshsahu/Caravan/actions/workflows/release.yaml)
 ![Release](https://img.shields.io/github/v/release/hiteshsahu/caravan)
-![Go Version](https://img.shields.io/github/go-mod/go-version/hiteshsahu/caravan) ![GoReleaser](https://img.shields.io/badge/Built%20with-GoReleaser-blue)
+
 
 ![License](https://img.shields.io/github/license/hiteshsahu/caravan)
 ![Downloads](https://img.shields.io/github/downloads/hiteshsahu/caravan/total)
@@ -65,9 +66,12 @@ Its completing project to:
 
 ## ⚡ Prerequisites
 
-📟 Requires **Go 1.22+**
+### 📟 Requires **Go 1.22+**
 
   > choco install golang
+
+![Go Version](https://img.shields.io/github/go-mod/go-version/hiteshsahu/caravan) ![GoReleaser](https://img.shields.io/badge/Built%20with-GoReleaser-blue)
+
 
   More detail on this [Medium Post](https://medium.com/@hiteshkrsahu/installing-go-on-windows-the-5-minute-guide-and-the-gotchas-nobody-mentions-878eb3ea2277)
   

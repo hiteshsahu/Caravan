@@ -39,7 +39,7 @@
           run: |
             test -z "$(gofmt -l .)"
 
-        - name: 📝 Run go vet Lint
+        - name: 📝 Run go vet (Lint)
           run: go vet ./...
 
         - name: 🔨 Build
