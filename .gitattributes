@@ -3,3 +3,7 @@
 # (e.g. "/usr/bin/env: 'bash\r': No such file or directory") on Windows
 # clones where core.autocrlf=true.
 slurm-cluster/** text eol=lf
+
+# Job scripts go straight into sbatch on the controller, which rejects
+# DOS line breaks outright ("Batch script contains DOS line breaks").
+*.sh text eol=lf

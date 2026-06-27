@@ -16,6 +16,9 @@ func Up() error {
 		return err
 	}
 	fmt.Printf("→ engine: %s\n", engine.Name())
+	if GPUEnabled() {
+		fmt.Println("→ GPU: real device passthrough on c1 (CARAVAN_GPU=real)")
+	}
 	fmt.Printf("→ scaffolding GPU Slurm cluster in %s\n", dir)
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return err

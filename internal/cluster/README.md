@@ -13,8 +13,11 @@ Slurm scaffold, and drives it via compose.
   wired in from `main.go` (a `go:embed` directive can't reach outside its
   own file's directory, so this package can't embed it directly).
   `Extract()` writes it to `dir` (preserving `+x` on `.sh` files).
-- **compose.go** — `composeFile(dir)` and the fixed compose project name
-  (`caravan`, used for `-p` so multiple checkouts don't collide).
+- **compose.go** — `composeFile(dir)`/`composeGPUFile(dir)`, the fixed
+  compose project name (`caravan`, used for `-p` so multiple checkouts
+  don't collide), and `GPUEnabled()` (`CARAVAN_GPU=real`), which
+  `engine.go`'s `composeArgv` checks to layer `docker-compose.gpu.yml` on
+  top of the default compose file.
 - **status.go** — `Up`/`Down`/`Status`: resolve `scaffoldDir()`
   (`CARAVAN_DIR`, default `~/.caravan/cluster`), get an `Engine`, and call
   through. These are what the `cli` package's `RunE` functions call.

@@ -38,6 +38,9 @@ func (e *baseEngine) Name() string { return e.name }
 func (e *baseEngine) composeArgv(dir string, extra ...string) (string, []string) {
 	args := append([]string{}, e.compose[1:]...)
 	args = append(args, "-p", project, "-f", composeFile(dir))
+	if GPUEnabled() {
+		args = append(args, "-f", composeGPUFile(dir))
+	}
 	args = append(args, extra...)
 	return e.compose[0], args
 }

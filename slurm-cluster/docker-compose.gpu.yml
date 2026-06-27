@@ -1,0 +1,29 @@
+# Overlay enabled by CARAVAN_GPU=real (caravan -f's this in alongside
+# docker-compose.yml). Swaps slurm.conf/gres.conf for the variants that
+# give c1 a real GPU, and reserves the host's GPU for c1's container.
+services:
+  slurmctld:
+    volumes:
+      - ./slurm.gpu.conf:/etc/slurm/slurm.conf:ro
+      - ./gres.gpu.conf:/etc/slurm/gres.conf:ro
+      - ./cgroup.conf:/etc/slurm/cgroup.conf:ro
+      - slurm_state:/var/spool/slurmctld
+
+  c1:
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - ./slurm.gpu.conf:/etc/slurm/slurm.conf:ro
+      - ./gres.gpu.conf:/etc/slurm/gres.conf:ro
+      - ./cgroup.conf:/etc/slurm/cgroup.conf:ro
+
+  c2:
+    volumes:
+      - ./slurm.gpu.conf:/etc/slurm/slurm.conf:ro
+      - ./gres.gpu.conf:/etc/slurm/gres.conf:ro
+      - ./cgroup.conf:/etc/slurm/cgroup.conf:ro

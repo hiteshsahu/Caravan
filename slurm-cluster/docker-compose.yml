@@ -25,10 +25,13 @@ services:
     container_name: c1
     restart: unless-stopped
     # slurmd's cgroup/v2 plugin always targets <cgroup-mount-root>/system.slice
-    # for its per-step scope, regardless of IgnoreSystemd. privileged +
-    # cgroupns:host give it real cgroup write access, and cgroup_parent "/"
-    # keeps this container's own cgroup a direct child of the mount root
-    # (matching bare-metal layout) so that target path actually exists.
+    # for its per-step scope (a plain, non-recursive mkdir, regardless of
+    # IgnoreSystemd). In a default/private cgroup namespace, the container's
+    # remapped "/sys/fs/cgroup" root has no pre-existing system.slice child,
+    # so that mkdir fails with ENOENT. cgroupns:host + cgroup_parent "/"
+    # make this container's own cgroup a direct child of the host's real
+    # /sys/fs/cgroup, where system.slice already exists (and is writable
+    # since privileged) — so only the missing leaf needs creating.
     privileged: true
     cgroup: host
     cgroup_parent: "/"

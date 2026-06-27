@@ -20,4 +20,16 @@ RUN install -d -m 0755 /var/spool/slurmctld /var/spool/slurmd /var/log/slurm /ru
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+# With IgnoreSystemd=yes (no systemd/dbus in these containers), slurmd
+# relocates itself into system.slice/<node>_slurmstepd.scope at startup.
+# slurmstepd, forked from slurmd, inherits that cgroup and then runs the
+# *same* "create my own scope" logic relative to it, doubling the path
+# (.../c1_slurmstepd.scope/system.slice/c1_slurmstepd.scope) and failing
+# every job launch with "Resource temporarily unavailable". Wrapping the
+# real binary in `unshare --cgroup` gives it a fresh cgroup-namespace view
+# of "root" before that logic runs, avoiding the doubling.
+RUN mv /usr/sbin/slurmstepd /usr/sbin/slurmstepd.real \
+    && printf '#!/bin/sh\nexec unshare --cgroup /usr/sbin/slurmstepd.real "$@"\n' > /usr/sbin/slurmstepd \
+    && chmod +x /usr/sbin/slurmstepd
+
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
