@@ -1,49 +1,59 @@
 # Caravan 🐪🐫🛕
 
-> **A CLI for GPU Slurm stand up a cluster and run workloads on it.**
+> ### Make it easy to spin SLURM Cluster and submit your HPC workloads to it.
 
-![](./img/cover.jpg)
+![Caravan COver](./img/cover.jpg)
 
-### Purpose
+## Purpose
 Slurm is powerful but a chore to operate and submit to. 
 
-Caravan is a single binary that carries a GPU Slurm cluster *inside it* and makes it a one-liner to bring up,
-submit jobs to, and (next) track experiments and rerun workloads.
+Caravan make it easy by bundling everything in a single binary that carries a GPU Slurm cluster *inside it*.
 
-Its completing project to:
-- [squint](https://github.com/hiteshsahu/squint) watching the queue and 
-- [gpu-lens](https://github.com/hiteshsahu/gpu-lens) watching the GPUs.
+Making it a one-liner to bring up, submit jobs, track experiments and rerun workloads.
 
 > Caravan **uses** Slurm — it doesn't replace it. Slurm stays the scheduler;
 
-> Caravan is the control plane and developer experience around it.
+> Caravan is the control plane and easier developer experience around it.
 
+Its completing project to:
+- [squint](https://github.com/hiteshsahu/squint): TUI Dashboard to check workload & squatting GPUs
+- [gpu-lens](https://github.com/hiteshsahu/gpu-lens) : Drop-in GPU + scheduler observability for clusters(SLURM+K8)
+
+
+```mermaid
+flowchart TD
+
+    A["🐫 Caravan"]
+
+    A -->|"squeue"| B["slurmctld"]
+    A -->|"scontrol"| B
+    A -->|"sacct"| C["slurmdbd"]
+    A -->|"DCGM / nvidia-smi"| D["Compute Nodes"]
+
+    B --> D
+
+    D --> E["slurmd"]
+    E --> F["slurmstepd"]
+```
 ---
 
-# How to Use
 
 ## ⚡ Prerequisites
 
 📟 Requires **Go 1.22+**
 
-For windows
-> choco install golang
-More detail on this [Medium Post](https://medium.com/@hiteshkrsahu/installing-go-on-windows-the-5-minute-guide-and-the-gotchas-nobody-mentions-878eb3ea2277)
+  > choco install golang
 
-**Slurm** will be installed as Container Image
+  More detail on this [Medium Post](https://medium.com/@hiteshkrsahu/installing-go-on-windows-the-5-minute-guide-and-the-gotchas-nobody-mentions-878eb3ea2277)
+  
+  **Slurm** will be installed as Container Image
 
 ### 🐳 Container engine
-Caravan works with both `Docker` or `Podman`, it auto-detects (`Docker` first, then
-  `Podman`) and uses the matching Compose.
+Caravan can work with both `Docker` or `Podman`, it auto-detects (`Docker` first, then`Podman`) and uses the matching Compose.
 
-  On Podman it uses `podman-compose` if installed, otherwise it will try to use `podman compose`.
+On Podman it uses `podman-compose` if installed, otherwise it will try to use `podman compose`.
 
-
-####  Using Podman
-
-Caravan auto-detects `docker` first, then `podman` if available.
-
-Force Podman explicitly:
+You can Force Podman explicitly:
 
 ```bash
 CARAVAN_ENGINE=podman caravan cluster up
@@ -56,12 +66,47 @@ On macOS make sure the Podman VM is running first:
 podman machine start
 ```
 
+##  OS Support
+
+Recommended Platform
+
+| Environment       | Recommendation                                              |
+|-------------------|-------------------------------------------------------------|
+| 🐧 Linux          | ⭐⭐⭐⭐⭐ Best for full development, testing, and production    |
+| 🪟 Windows + WSL2 | ⭐⭐⭐⭐⭐ Best Windows experience, close to Linux               |
+| 🍎 macOS          | ⭐⭐⭐⭐ Great for UI and mock-mode development                 |
+| 🪟 Native Windows | ⭐⭐⭐ Good for CLI/UI development; use WSL2 for Linux tooling |
+
+
+### Slurm + Caravan OS Compatibility
+
+| Feature                                    | Linux | Windows + WSL2 |      Windows      |       macOS       |
+|--------------------------------------------|:-----:|:--------------:|:-----------------:|:-----------------:|
+| Build                                      |   ✅   |       ✅        |         ✅         |         ✅         |
+| Run mock mode                              |   ✅   |       ✅        |         ✅         |         ✅         |
+| TUI development                            |   ✅   |       ✅        |         ✅         |         ✅         |
+| Unit tests                                 |   ✅   |       ✅        |         ✅         |         ✅         |
+| Integration tests (mock)                   |   ✅   |       ✅        |         ✅         |         ✅         |
+| Live Slurm (`squeue`, `sacct`, `scontrol`) |   ✅   |       ✅        | ⚠️ Remote cluster | ⚠️ Remote cluster |
+| DCGM GPU metrics                           |   ✅   |       ✅        |         ❌         |         ❌         |
+| `nvidia-smi` GPU metrics                   |   ✅   |       ✅        |         ✅         |    ⚠️ Limited     |
+| Full end-to-end testing                    |   ✅   |       ⚠️       |         ❌         |         ❌         |
+
+
+Notes
+-  Live Slurm support in WSL2 works if you have access to a remote Linux Slurm cluster (via SSH) or a local Slurm installation inside WSL2.
+-  DCGM requires machine with NVIDIA GPU with CUDA support and the NVIDIA WSL driver stack.
+-  nvidia-smi is only available on Windows and inside WSL2 when using the NVIDIA WSL GPU drivers.
+
+---
+
+#  Get Started
 
 ##  1. Get the CLI  📦
 
 There are 2 ways to get caravan cli
 
-### ✨ 1. Using Released Binary
+### ✨ 1. Using pre compile released Binary (for production)
 Fetch release build:
 
 ```bash
@@ -70,7 +115,7 @@ Fetch release build:
 
 ### ⚙️ 2. Build Locally (for devs)
 
-First, Build using local source:
+Build using local source
 
 ####  On macOS
 
@@ -78,12 +123,10 @@ First, Build using local source:
 
 A `caravan` binary will be created at project root for starting the cluster.
 
-
 ####  On Windows
 > go build -o caravan.exe .
 
-For Windows, `caravan.exe` will be created along with `caravan` binaray
-
+A `caravan.exe` will be created along with `caravan` binary
 
 ## 2. Verify
 
@@ -101,10 +144,9 @@ Varify if CLI is ready
 
 > caravan
 
-
 ---
 
-## 2. Start Your Caravan 🐪🐫
+## 3. Start Your Caravan 🐪🐫
 
 **Once you have CLI ready, you can start cluster and submit jobs**
 
@@ -290,6 +332,44 @@ Tests are run as part of CI itself.
 ```
 
 ---
+
+## Architecture
+
+
+```mermaid
+flowchart TB
+
+    subgraph Caravan["🚚 Caravan"]
+        CLI["CLI / TUI / Dashboard"]
+    end
+
+    CLI --> SQ["squeue"]
+    CLI --> SA["sacct"]
+    CLI --> SC["scontrol"]
+    CLI --> GPU["dcgmi / nvidia-smi"]
+
+    SQ --> CTL
+    SA --> DBD
+    SC --> CTL
+
+    subgraph Slurm["Slurm Cluster"]
+
+        CTL["slurmctld<br/>Controller & Scheduler"]
+
+        DBD["slurmdbd<br/>Accounting (optional)"]
+
+        CTL --> N1["slurmd<br/>Compute Node"]
+        CTL --> N2["slurmd<br/>Compute Node"]
+        CTL --> N3["..."]
+
+        N1 --> S1["slurmstepd"]
+        N2 --> S2["slurmstepd"]
+
+    end
+
+    GPU --> N1
+    GPU --> N2
+```
 
 ## 📁 Folder Structure
 
