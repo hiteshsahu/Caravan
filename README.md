@@ -20,31 +20,26 @@ Its completing project to:
 
 ---
 
-## Quick start
+# How to Use
 
-```bash
-caravan cluster up        # build + start (controller + 2 fake-GPU nodes)
-caravan cluster down      # stop (-v to also wipe volumes)
-caravan cluster status    # container state + sinfo
-caravan submit <script>   # stream a script into sbatch on the controller
-```
+## ⚡ Prerequisites
 
-## Cluster up
+📟 Requires **Go 1.22+**
 
-### Prerequisites
+For windows
+> choco install golang
+More detail on this [Medium Post](https://medium.com/@hiteshkrsahu/installing-go-on-windows-the-5-minute-guide-and-the-gotchas-nobody-mentions-878eb3ea2277)
 
-- **Go 1.22+**
+**Slurm** will be installed as Container Image
 
-- ### Container engine
-
-   Caravan works with `Docker` or `Podman`, it auto-detects (`Docker` first, then
+### 🐳 Container engine
+Caravan works with both `Docker` or `Podman`, it auto-detects (`Docker` first, then
   `Podman`) and uses the matching Compose.
 
-  On Podman it prefers `podman-compose` if
-  installed, else `podman compose`. Override either:
+  On Podman it uses `podman-compose` if installed, otherwise it will try to use `podman compose`.
 
 
-### Using Podman
+####  Using Podman
 
 Caravan auto-detects `docker` first, then `podman` if available.
 
@@ -60,53 +55,125 @@ On macOS make sure the Podman VM is running first:
 ```bash
 podman machine start
 ```
- 
----
 
-# How it works
 
-###  Get the CLI  📦
+##  1. Get the CLI  📦
 
 There are 2 ways to get caravan cli
 
-### 1. Using Released Binary
+### ✨ 1. Using Released Binary
 Fetch release build:
 
 ```bash
   go install github.com/hiteshsahu/caravan@latest
 ```
 
-### 2. Build Locally
-Build using local source:
+### ⚙️ 2. Build Locally (for devs)
 
-```bash
-  # build local sources
-  go build -o caravan .
-  
-  # Verify 
-  ./caravan
-```
+First, Build using local source:
+
+####  On macOS
+
+> go build -o caravan .
+
+A `caravan` binary will be created at project root for starting the cluster.
+
+
+####  On Windows
+> go build -o caravan.exe .
+
+For Windows, `caravan.exe` will be created along with `caravan` binaray
+
+
+## 2. Verify
+
+Varify if CLI is ready
+
+### With Local Build
+
+#### On MacOS/Linux
+> ./caravan
+
+####  On Windows 
+> ./caravan.exe --help
+
+### With Released build
+
+> caravan
+
+
+---
+
+## 2. Start Your Caravan 🐪🐫
+
+**Once you have CLI ready, you can start cluster and submit jobs**
 
 ![Caravan Batch](./img/illustration.jpeg)
 
-## Start Your Caravan
 
-Once you have CLI you can start cluster and submit jobs
+###  Quick start with released CLI binary
 
-These steps are for local binary. Replace `./caravan` with `caravan` and you can use them for released CLI
+**On macOS**
 
+```bash
+
+caravan cluster up        # build + start (controller + 2 fake-GPU nodes)
+caravan cluster down      # stop (-v to also wipe volumes)
+caravan cluster status    # container state + sinfo
+caravan submit <script>   # stream a script into sbatch on the controller
+```
+
+### Quick start with local binary.
+
+> Replace `caravan` with `./caravan` and you can use them for local CLI
+
+**On macOS**
+
+```bash
+
+./caravan cluster up        # build + start (controller + 2 fake-GPU nodes)
+./caravan cluster down      # stop (-v to also wipe volumes)
+./caravan cluster status    # container state + sinfo
+./caravan submit <script>   # stream a script into sbatch on the controller
+```
+
+
+**On Windows**
+
+**Note:** for PowerShell users: use `./caravan.exe` instead of `./caravan`.
+
+```bash
+
+./caravan.exe cluster up        # build + start (controller + 2 fake-GPU nodes)
+./caravan.exe cluster status    # container state + sinfo
+./caravan.exe submit examples/submit_example.sh
+./caravan.exe cluster down      # stop (-v to also wipe volumes)
+```
+
+
+---
+
+## How it works
 
 ### ▶️ Start Cluster 
 
-Writes an embedded Slurm scaffold to `~/.caravan/cluster` and runs `docker`/`podman compose` against it.
+Writes an embedded Slurm scaffold to 
+- MacOS:   `~/.caravan/cluster` 
+- Windows: `%USERPROFILE%\.caravan\cluster`
 
+and runs `docker`/`podman compose` against it.
 
 ```bash
   ./caravan cluster up
+```
 
+You can override scafold to your desired directory by passing `CARAVAN_DIR`
+
+```bash
   # override the scaffold location with `CARAVAN_DIR`
   CARAVAN_DIR=/tmp/caravan/cluster ./caravan cluster up
 ```
+
 
 - The two compute nodes advertise `gpu:4` each as **fake, count-only GPUs** 
 - The real GPU scheduling, no hardware needed (no `nvidia-smi` telemetry).
@@ -185,6 +252,8 @@ Tear down cluster and option to clean mounted volumes as well
   ./caravan cluster down      
   ./caravan cluster down  -v  # Also remove disc volumes  
 ```  
+
+
 
 ---
 
