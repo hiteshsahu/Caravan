@@ -1,20 +1,20 @@
 package cluster
 
 import (
-	"embed"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-// The GPU Slurm cluster scaffold travels inside the binary.
-//
-//go:embed assets/*
-var assets embed.FS
+// Scaffold is the embedded GPU Slurm cluster scaffold. go:embed directives
+// can't reach outside their own file's directory tree, so slurm-cluster/
+// lives at the repo root and main wires it in here rather than this
+// package embedding it directly.
+var Scaffold fs.FS
 
-// scaffoldDir is where the embedded assets get written before compose runs.
-// Override with CARAVAN_DIR.
+// scaffoldDir is where the embedded scaffold gets written before compose
+// runs. Override with CARAVAN_DIR.
 func scaffoldDir() (string, error) {
 	if d := os.Getenv("CARAVAN_DIR"); d != "" {
 		return d, nil
@@ -28,19 +28,19 @@ func scaffoldDir() (string, error) {
 
 // Extract writes the embedded scaffold into dir.
 func Extract(dir string) error {
-	return fs.WalkDir(assets, "assets", func(p string, d fs.DirEntry, err error) error {
+	return fs.WalkDir(Scaffold, "slurm-cluster", func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if p == "assets" {
+		if p == "slurm-cluster" {
 			return nil
 		}
-		rel := strings.TrimPrefix(p, "assets/")
+		rel := strings.TrimPrefix(p, "slurm-cluster/")
 		target := filepath.Join(dir, rel)
 		if d.IsDir() {
 			return os.MkdirAll(target, 0o755)
 		}
-		b, err := assets.ReadFile(p)
+		b, err := fs.ReadFile(Scaffold, p)
 		if err != nil {
 			return err
 		}
